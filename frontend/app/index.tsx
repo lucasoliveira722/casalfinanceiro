@@ -1,31 +1,65 @@
-import { Link } from "expo-router";
-import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+} from "react-native";
+import { globalStyles } from "../src/styles/global";
 
-// Dados fictícios para visualizar a interface
-const MOCK_DATA = {
-  user1Name: "Eu",
-  user2Name: "Ela",
-  totalUser1: 1350.5,
-  totalUser2: 980.0,
-  // Resultado do cálculo (Ex: User 1 pagou mais, mas a divisão justa diria outra coisa)
-  // Positivo: Eu recebo / Negativo: Eu devo
-  netBalance: -185.25,
-};
-
-const RECENT_EXPENSES = [
+// Dados fictícios simulando o retorno do nosso futuro backend Java
+const MOCK_EXPENSES = [
   {
     id: "1",
-    desc: "Mercado Semanal",
-    amount: 450.0,
-    payer: "Eu",
-    date: "04/01",
+    desc: "Mercado Mensal",
+    amount: 850.0,
+    visibility: "SHARED",
+    type: "SINGLE",
+    date: "05/03/2026",
   },
-  { id: "2", desc: "Conta de Luz", amount: 120.0, payer: "Ela", date: "03/01" },
-  { id: "3", desc: "Jantar Ifood", amount: 85.9, payer: "Eu", date: "02/01" },
+  {
+    id: "2",
+    desc: "Conta de Internet",
+    amount: 120.0,
+    visibility: "SHARED",
+    type: "RECURRING",
+    date: "10/03/2026",
+  },
+  {
+    id: "3",
+    desc: "Tênis de Corrida",
+    amount: 350.0,
+    visibility: "PERSONAL",
+    type: "INSTALLMENT",
+    date: "12/03/2026",
+    installments: "3/6",
+  },
+  {
+    id: "4",
+    desc: "Ifood (Lanche)",
+    amount: 45.9,
+    visibility: "PERSONAL",
+    type: "SINGLE",
+    date: "15/03/2026",
+  },
 ];
 
 export default function DashboardScreen() {
+  // Estado para controlar qual aba está ativa ('SHARED' ou 'PERSONAL')
+  const [activeTab, setActiveTab] = useState("SHARED");
+
+  // Filtra os gastos baseados na aba selecionada
+  const filteredExpenses = MOCK_EXPENSES.filter(
+    (exp) => exp.visibility === activeTab,
+  );
+
+  // Calcula o total da aba atual
+  const totalAmount = filteredExpenses.reduce(
+    (sum, item) => sum + item.amount,
+    0,
+  );
+
   // Função auxiliar para formatar moeda
   const formatCurrency = (value: number) => {
     return value.toLocaleString("pt-BR", {
@@ -34,128 +68,150 @@ export default function DashboardScreen() {
     });
   };
 
+  // Renderiza cada item da lista (boa prática extrair para uma função)
+  const renderExpenseItem = ({ item }: { item: any }) => (
+    <View style={styles.expenseCard}>
+      <View style={styles.expenseInfo}>
+        <Text style={styles.expenseDesc}>{item.desc}</Text>
+        <Text style={styles.expenseMeta}>
+          {item.date} •{" "}
+          {item.type === "RECURRING"
+            ? "Permanente"
+            : item.type === "INSTALLMENT"
+              ? `Parcela (${item.installments})`
+              : "Único"}
+        </Text>
+      </View>
+      <Text style={styles.expenseAmount}>{formatCurrency(item.amount)}</Text>
+    </View>
+  );
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* 1. Card de Resumo (O Acerto de Contas) */}
-      <View style={styles.summaryCard}>
-        <Text style={styles.cardTitle}>Resumo de Janeiro</Text>
+    <View style={globalStyles.container}>
+      <Text style={globalStyles.title}>Visão Geral</Text>
 
-        <View style={styles.row}>
-          <View style={styles.column}>
-            <Text style={styles.label}>Você pagou</Text>
-            <Text style={styles.value}>
-              {formatCurrency(MOCK_DATA.totalUser1)}
-            </Text>
-          </View>
-          <View style={styles.dividerVertical} />
-          <View style={styles.column}>
-            <Text style={styles.label}>Ela pagou</Text>
-            <Text style={styles.value}>
-              {formatCurrency(MOCK_DATA.totalUser2)}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.dividerHorizontal} />
-
-        <View style={styles.resultContainer}>
-          <Text style={styles.resultLabel}>Acerto final:</Text>
-          {MOCK_DATA.netBalance < 0 ? (
-            <Text style={[styles.resultValue, { color: "#e74c3c" }]}>
-              Você deve {formatCurrency(Math.abs(MOCK_DATA.netBalance))}
-            </Text>
-          ) : (
-            <Text style={[styles.resultValue, { color: "#27ae60" }]}>
-              Você recebe {formatCurrency(MOCK_DATA.netBalance)}
-            </Text>
-          )}
-        </View>
-      </View>
-
-      {/* 2. Lista de Gastos Recentes */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Últimos lançamentos</Text>
-        {/* Link rápido para ir para a tela de adicionar */}
-        <Link href="/add" style={styles.linkText}>
-          + Novo
-        </Link>
-      </View>
-
-      {/* Renderização simples da lista */}
-      {RECENT_EXPENSES.map((item) => (
-        <View key={item.id} style={styles.expenseItem}>
-          <View>
-            <Text style={styles.expenseDesc}>{item.desc}</Text>
-            <Text style={styles.expenseDate}>
-              {item.date} • Pago por {item.payer}
-            </Text>
-          </View>
-          <Text style={styles.expenseAmount}>
-            {formatCurrency(item.amount)}
+      {/* Controle de Abas (Toggle) usando TouchableOpacity */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === "SHARED" && styles.activeTab]}
+          onPress={() => setActiveTab("SHARED")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "SHARED" && styles.activeTabText,
+            ]}
+          >
+            Casal
           </Text>
-        </View>
-      ))}
-    </ScrollView>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeTab === "PERSONAL" && styles.activeTab,
+          ]}
+          onPress={() => setActiveTab("PERSONAL")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "PERSONAL" && styles.activeTabText,
+            ]}
+          >
+            Meus Gastos
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Card de Resumo Financeiro */}
+      <View style={styles.summaryCard}>
+        <Text style={styles.summaryLabel}>
+          Total {activeTab === "SHARED" ? "do Casal" : "Pessoal"} este mês
+        </Text>
+        <Text style={styles.summaryTotal}>{formatCurrency(totalAmount)}</Text>
+      </View>
+
+      {/* Lista de Gastos usando FlatList (Melhor performance que ScrollView para listas) */}
+      <Text style={styles.listTitle}>Lançamentos</Text>
+      <FlatList
+        data={filteredExpenses}
+        keyExtractor={(item) => item.id}
+        renderItem={renderExpenseItem}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>Nenhum gasto registrado.</Text>
+        }
+      />
+    </View>
   );
 }
 
+// Estilos específicos desta tela (os gerais vêm do globalStyles)
 const styles = StyleSheet.create({
-  container: { padding: 20, backgroundColor: "#f2f2f7", flexGrow: 1 },
-
-  // Estilos do Card
-  summaryCard: {
+  // Estilo do Toggle (Abas)
+  tabContainer: {
+    flexDirection: "row",
+    backgroundColor: "#e5e5ea",
+    borderRadius: 8,
+    padding: 4,
+    marginBottom: 20,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRadius: 6,
+  },
+  activeTab: {
     backgroundColor: "white",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 25,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3, // Sombra no Android
+    shadowRadius: 2,
+    elevation: 2,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 15,
-    color: "#333",
+  tabText: { fontWeight: "600", color: "#666" },
+  activeTabText: { color: "#000" },
+
+  // Estilo do Card de Resumo
+  summaryCard: {
+    backgroundColor: "#007AFF", // Azul padrão do app
+    padding: 20,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 25,
   },
-  row: { flexDirection: "row", justifyContent: "space-between" },
-  column: { flex: 1, alignItems: "center" },
-  dividerVertical: { width: 1, backgroundColor: "#eee", marginHorizontal: 10 },
-  dividerHorizontal: { height: 1, backgroundColor: "#eee", marginVertical: 15 },
-  label: {
-    fontSize: 12,
-    color: "#666",
+  summaryLabel: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 14,
     textTransform: "uppercase",
     marginBottom: 5,
   },
-  value: { fontSize: 18, fontWeight: "600", color: "#333" },
-
-  resultContainer: { alignItems: "center" },
-  resultLabel: { fontSize: 14, color: "#666", marginBottom: 5 },
-  resultValue: { fontSize: 22, fontWeight: "bold" },
+  summaryTotal: { color: "white", fontSize: 32, fontWeight: "bold" },
 
   // Estilos da Lista
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  listTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
     marginBottom: 10,
+    color: "#333",
   },
-  sectionTitle: { fontSize: 18, fontWeight: "600", color: "#333" },
-  linkText: { color: "#007AFF", fontWeight: "600" },
-
-  expenseItem: {
+  expenseCard: {
     backgroundColor: "white",
     padding: 15,
-    borderRadius: 12,
+    borderRadius: 10,
     marginBottom: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#eee",
   },
-  expenseDesc: { fontSize: 16, fontWeight: "500", color: "#333" },
-  expenseDate: { fontSize: 12, color: "#999", marginTop: 3 },
-  expenseAmount: { fontSize: 16, fontWeight: "bold", color: "#333" },
+  expenseInfo: { flex: 1 },
+  expenseDesc: { fontSize: 16, fontWeight: "600", color: "#333" },
+  expenseMeta: { fontSize: 12, color: "#888", marginTop: 4 },
+  expenseAmount: { fontSize: 16, fontWeight: "bold", color: "#e74c3c" }, // Vermelho para saída de dinheiro
+  emptyText: { textAlign: "center", color: "#999", marginTop: 20 },
 });
