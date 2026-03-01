@@ -1,4 +1,4 @@
-package com.example.casalfinanceiro;
+package com.casalfinanceiro;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
