@@ -1,17 +1,24 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { globalStyles } from "../src/styles/global";
+import { Colors } from "../constants/theme";
 
 const BACKEND_URL = "http://192.168.0.52:9095/api/expenses";
+
+const MONTHS = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -19,19 +26,17 @@ export default function DashboardScreen() {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const now = new Date();
+  const currentMonth = MONTHS[now.getMonth()];
+  const currentYear = now.getFullYear();
+
   const fetchExpenses = async () => {
     setIsLoading(true);
     try {
-      const currentDate = new Date();
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth() + 1;
-
-      // Passa o mês e o ano atuais para a query inteligente do Java
-      const response = await fetch(
-        `${BACKEND_URL}?year=${year}&month=${month}`,
-      );
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const response = await fetch(`${BACKEND_URL}?year=${year}&month=${month}`);
       if (!response.ok) throw new Error("Falha ao buscar dados");
-
       const data = await response.json();
       setExpenses(data);
     } catch (error) {
@@ -42,13 +47,8 @@ export default function DashboardScreen() {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchExpenses();
-    }, []),
-  );
+  useFocusEffect(useCallback(() => { fetchExpenses(); }, []));
 
-  // Função auxiliar essencial: Retorna a Parcela se for INSTALLMENT, ou o Valor se for Único/Recorrente
   const getEffectiveAmount = (item: any) => {
     return item.expenseType === "INSTALLMENT" && item.installmentAmount
       ? item.installmentAmount
@@ -60,7 +60,6 @@ export default function DashboardScreen() {
       ? expenses
       : expenses.filter((exp) => exp.visibility === activeTab);
 
-  // Calcula os totais com base no valor efetivo (da parcela)
   let totalAmount = 0;
   if (activeTab === "TOTAL") {
     const personalTotal = expenses
@@ -69,95 +68,49 @@ export default function DashboardScreen() {
     const sharedTotal = expenses
       .filter((e) => e.visibility === "SHARED")
       .reduce((sum, item) => sum + getEffectiveAmount(item), 0);
-
     totalAmount = personalTotal + sharedTotal / 2;
   } else {
-    totalAmount = filteredExpenses.reduce(
-      (sum, item) => sum + getEffectiveAmount(item),
-      0,
-    );
+    totalAmount = filteredExpenses.reduce((sum, item) => sum + getEffectiveAmount(item), 0);
   }
 
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-  };
+  const formatCurrency = (value: number) =>
+    value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const formatDate = (isoString: string) => {
     if (!isoString) return "";
-    const date = new Date(isoString);
-    return date.toLocaleDateString("pt-BR");
+    return new Date(isoString).toLocaleDateString("pt-BR");
   };
 
-  const renderExpenseItem = ({ item }: { item: any }) => (
-    <View style={styles.expenseCard}>
-      <View style={styles.expenseInfo}>
-        <Text style={styles.expenseDesc}>{item.description}</Text>
-        <Text style={styles.expenseMeta}>
-          {formatDate(item.createdAt)} •{" "}
-          {item.expenseType === "RECURRING"
-            ? "Permanente"
-            : item.expenseType === "INSTALLMENT"
-              ? `Parcelado (${item.installments}x)`
-              : "Único"}
-        </Text>
-        {activeTab === "TOTAL" && (
-          <Text
-            style={[
-              styles.badge,
-              item.visibility === "SHARED"
-                ? styles.badgeShared
-                : styles.badgePersonal,
-            ]}
-          >
-            {item.visibility === "SHARED" ? "Casal" : "Pessoal"}
-          </Text>
-        )}
-      </View>
-      <View style={styles.actionContainer}>
-        {/* Mostra o valor que será debitado no mês atual */}
-        <Text style={styles.expenseAmount}>
-          {formatCurrency(getEffectiveAmount(item))}
-        </Text>
+  const getSummaryLabel = () => {
+    if (activeTab === "SHARED") return "Total do Casal";
+    if (activeTab === "PERSONAL") return "Meus Gastos";
+    return "Custo Real Mensal";
+  };
 
-        {/* Se for parcelado, mostra discretamente o valor total da compra */}
-        {item.expenseType === "INSTALLMENT" && (
-          <Text style={styles.totalValueHint}>
-            Total: {formatCurrency(item.amount)}
-          </Text>
-        )}
+  const getTypeIcon = (expenseType: string): any => {
+    if (expenseType === "RECURRING") return "repeat";
+    if (expenseType === "INSTALLMENT") return "card";
+    return "receipt";
+  };
 
-        <View style={styles.buttonRow}>
-          <TouchableOpacity onPress={() => handleEdit(item)}>
-            <Text style={styles.editButton}>Editar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleDelete(item.id)}>
-            <Text style={styles.deleteButton}>Excluir</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
+  const getTypeLabel = (item: any) => {
+    if (item.expenseType === "RECURRING") return "Recorrente";
+    if (item.expenseType === "INSTALLMENT") return `${item.installments}x parcelado`;
+    return "Único";
+  };
 
   const handleDelete = (id: string) => {
-    Alert.alert("Atenção", "Tem certeza que deseja excluir este gasto?", [
+    Alert.alert("Excluir gasto", "Tem certeza que deseja excluir?", [
       { text: "Cancelar", style: "cancel" },
       {
         text: "Excluir",
         style: "destructive",
         onPress: async () => {
           try {
-            const response = await fetch(`${BACKEND_URL}/${id}`, {
-              method: "DELETE",
-            });
-            if (response.ok) {
-              fetchExpenses();
-            } else {
-              Alert.alert("Erro", "Não foi possível excluir.");
-            }
-          } catch (error) {
+            const response = await fetch(`${BACKEND_URL}/${id}`, { method: "DELETE" });
+            if (response.ok) fetchExpenses();
+            else Alert.alert("Erro", "Não foi possível excluir.");
+          } catch {
             Alert.alert("Erro", "Falha na conexão com o servidor.");
           }
         },
@@ -179,178 +132,384 @@ export default function DashboardScreen() {
     });
   };
 
-  const getSummaryLabel = () => {
-    if (activeTab === "SHARED") return "Total do Casal";
-    if (activeTab === "PERSONAL") return "Seu Total Pessoal";
-    return "Seu Custo Real Mensal (100% Pessoal + 50% Casal)";
-  };
+  const renderExpenseItem = ({ item }: { item: any }) => (
+    <View style={styles.expenseCard}>
+      {/* Linha sutil de destaque no topo do card */}
+      <View style={styles.cardHighlight} />
+
+      <View style={styles.expenseRow}>
+        <View style={styles.expenseIconBg}>
+          <Ionicons name={getTypeIcon(item.expenseType)} size={18} color={Colors.primary} />
+        </View>
+
+        <View style={styles.expenseInfo}>
+          <Text style={styles.expenseDesc} numberOfLines={1}>{item.description}</Text>
+          <Text style={styles.expenseMeta}>
+            {formatDate(item.createdAt)} · {getTypeLabel(item)}
+          </Text>
+          {activeTab === "TOTAL" && (
+            <View style={[
+              styles.badge,
+              item.visibility === "SHARED" ? styles.badgeShared : styles.badgePersonal,
+            ]}>
+              <Text style={[
+                styles.badgeText,
+                item.visibility === "SHARED" ? styles.badgeSharedText : styles.badgePersonalText,
+              ]}>
+                {item.visibility === "SHARED" ? "Casal" : "Pessoal"}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.expenseRight}>
+          <Text style={styles.expenseAmount}>
+            − {formatCurrency(getEffectiveAmount(item))}
+          </Text>
+          {item.expenseType === "INSTALLMENT" && (
+            <Text style={styles.expenseTotalHint}>
+              Total: {formatCurrency(item.amount)}
+            </Text>
+          )}
+          <View style={styles.actionRow}>
+            <TouchableOpacity onPress={() => handleEdit(item)} style={styles.actionBtn}>
+              <Ionicons name="pencil-outline" size={13} color={Colors.textSub} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.actionBtn}>
+              <Ionicons name="trash-outline" size={13} color={Colors.danger} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
+  const FILTER_TABS = [
+    { key: "SHARED", label: "Casal" },
+    { key: "PERSONAL", label: "Pessoal" },
+    { key: "TOTAL", label: "Total" },
+  ];
+
+  const ListHeader = () => (
+    <>
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.screenTitle}>Visão Geral</Text>
+          <Text style={styles.screenSubtitle}>{currentMonth} · {currentYear}</Text>
+        </View>
+        <TouchableOpacity style={styles.refreshBtn} onPress={fetchExpenses}>
+          <Ionicons name="refresh-outline" size={18} color={Colors.textSub} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Summary Card */}
+      <View style={styles.summaryCard}>
+        <View style={styles.summaryGlow} />
+        <View style={styles.summaryCardHighlight} />
+        <Text style={styles.summaryLabel}>{getSummaryLabel()}</Text>
+        <Text style={styles.summaryAmount}>{formatCurrency(totalAmount)}</Text>
+        <Text style={styles.summaryCount}>{filteredExpenses.length} lançamentos este mês</Text>
+      </View>
+
+      {/* Filter Pills */}
+      <View style={styles.filterRow}>
+        {FILTER_TABS.map((tab) => (
+          <TouchableOpacity
+            key={tab.key}
+            style={[styles.filterPill, activeTab === tab.key && styles.filterPillActive]}
+            onPress={() => setActiveTab(tab.key)}
+            activeOpacity={0.75}
+          >
+            <Text style={[styles.filterPillText, activeTab === tab.key && styles.filterPillTextActive]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <Text style={styles.sectionLabel}>Lançamentos</Text>
+    </>
+  );
 
   return (
-    <View style={globalStyles.container}>
-      <Text style={globalStyles.title}>Visão Geral</Text>
-
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === "SHARED" && styles.activeTab]}
-          onPress={() => setActiveTab("SHARED")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "SHARED" && styles.activeTabText,
-            ]}
-          >
-            Casal
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === "PERSONAL" && styles.activeTab,
-          ]}
-          onPress={() => setActiveTab("PERSONAL")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "PERSONAL" && styles.activeTabText,
-            ]}
-          >
-            Meus Gastos
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === "TOTAL" && styles.activeTab]}
-          onPress={() => setActiveTab("TOTAL")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "TOTAL" && styles.activeTabText,
-            ]}
-          >
-            Total
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>{getSummaryLabel()}</Text>
-        <Text style={styles.summaryTotal}>{formatCurrency(totalAmount)}</Text>
-      </View>
-
-      <Text style={styles.listTitle}>Lançamentos</Text>
-
-      {isLoading ? (
-        <ActivityIndicator
-          size="large"
-          color="#007AFF"
-          style={{ marginTop: 20 }}
-        />
-      ) : (
-        <FlatList
-          data={filteredExpenses}
-          keyExtractor={(item) => item.id}
-          renderItem={renderExpenseItem}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>
-              Nenhum gasto registrado no mês atual.
-            </Text>
-          }
-        />
-      )}
+    <View style={styles.root}>
+      <SafeAreaView style={styles.safeArea}>
+        {isLoading ? (
+          <View style={styles.loadingWrapper}>
+            <ListHeader />
+            <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 48 }} />
+          </View>
+        ) : (
+          <FlatList
+            data={filteredExpenses}
+            keyExtractor={(item) => item.id}
+            renderItem={renderExpenseItem}
+            ListHeaderComponent={<ListHeader />}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <View style={styles.emptyIconBg}>
+                  <Ionicons name="wallet-outline" size={32} color={Colors.textMuted} />
+                </View>
+                <Text style={styles.emptyTitle}>Nenhum gasto</Text>
+                <Text style={styles.emptySubtitle}>Nenhum lançamento este mês</Text>
+              </View>
+            }
+          />
+        )}
+      </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  tabContainer: {
-    flexDirection: "row",
-    backgroundColor: "#e5e5ea",
-    borderRadius: 8,
-    padding: 4,
-    marginBottom: 20,
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: "center",
-    borderRadius: 6,
-  },
-  activeTab: {
-    backgroundColor: "white",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  tabText: { fontWeight: "600", color: "#666", fontSize: 13 },
-  activeTabText: { color: "#000" },
-  summaryCard: {
-    backgroundColor: "#007AFF",
-    padding: 20,
-    borderRadius: 12,
-    alignItems: "center",
-    marginBottom: 25,
-  },
-  summaryLabel: {
-    color: "rgba(255,255,255,0.8)",
-    fontSize: 12,
-    textTransform: "uppercase",
-    marginBottom: 5,
-    textAlign: "center",
-  },
-  summaryTotal: { color: "white", fontSize: 32, fontWeight: "bold" },
-  listTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#333",
-  },
-  expenseCard: {
-    backgroundColor: "white",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
+  root: { flex: 1, backgroundColor: Colors.bg },
+  safeArea: { flex: 1 },
+  loadingWrapper: { flex: 1, paddingHorizontal: 20 },
+  listContent: { paddingHorizontal: 20, paddingBottom: 130 },
+
+  // Header
+  header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
+    marginTop: 24,
+    marginBottom: 24,
+  },
+  screenTitle: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: Colors.text,
+    letterSpacing: -0.5,
+  },
+  screenSubtitle: {
+    fontSize: 14,
+    color: Colors.textSub,
+    marginTop: 3,
+  },
+  refreshBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.glass,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: Colors.glassBorder,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  expenseInfo: { flex: 1 },
-  expenseDesc: { fontSize: 16, fontWeight: "600", color: "#333" },
-  expenseMeta: { fontSize: 12, color: "#888", marginTop: 4 },
-  expenseAmount: { fontSize: 16, fontWeight: "bold", color: "#e74c3c" },
 
-  // Novo estilo para o valor total
-  totalValueHint: {
+  // Summary card
+  summaryCard: {
+    backgroundColor: Colors.glass,
+    borderWidth: 1,
+    borderColor: Colors.glassBorder,
+    borderRadius: 24,
+    padding: 28,
+    marginBottom: 20,
+    overflow: "hidden",
+    alignItems: "center",
+  },
+  summaryGlow: {
+    position: "absolute",
+    width: 220,
+    height: 220,
+    top: -110,
+    alignSelf: "center",
+    backgroundColor: Colors.primary,
+    opacity: 0.14,
+    borderRadius: 110,
+  },
+  summaryCardHighlight: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: Colors.glassHighlight,
+  },
+  summaryLabel: {
     fontSize: 11,
-    color: "#999",
-    marginTop: 2,
-    textAlign: "right",
+    color: Colors.textSub,
+    textTransform: "uppercase",
+    letterSpacing: 1.8,
+    marginBottom: 10,
+  },
+  summaryAmount: {
+    fontSize: 42,
+    fontWeight: "700",
+    color: Colors.text,
+    letterSpacing: -1.5,
+  },
+  summaryCount: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    marginTop: 10,
   },
 
-  emptyText: { textAlign: "center", color: "#999", marginTop: 20 },
-  actionContainer: { alignItems: "flex-end" },
-  buttonRow: { flexDirection: "row", marginTop: 8, gap: 15 },
-  editButton: { color: "#007AFF", fontWeight: "600", fontSize: 14 },
-  deleteButton: { color: "#e74c3c", fontWeight: "600", fontSize: 14 },
-  badge: {
-    marginTop: 6,
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    fontSize: 10,
-    fontWeight: "bold",
+  // Filter pills
+  filterRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 24,
+  },
+  filterPill: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 22,
+    alignItems: "center",
+    backgroundColor: Colors.glass,
+    borderWidth: 1,
+    borderColor: Colors.glassBorder,
+  },
+  filterPillActive: {
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primary,
+  },
+  filterPillText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: Colors.textSub,
+  },
+  filterPillTextActive: {
+    color: Colors.primary,
+  },
+
+  // Section label
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: Colors.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 1.5,
+    marginBottom: 12,
+  },
+
+  // Expense card
+  expenseCard: {
+    backgroundColor: Colors.glass,
+    borderWidth: 1,
+    borderColor: Colors.glassBorder,
+    borderRadius: 20,
+    marginBottom: 10,
     overflow: "hidden",
   },
-  badgeShared: { backgroundColor: "#e1bee7", color: "#6a1b9a" },
-  badgePersonal: { backgroundColor: "#b3e5fc", color: "#0277bd" },
+  cardHighlight: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.10)",
+  },
+  expenseRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+  },
+  expenseIconBg: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: Colors.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+    flexShrink: 0,
+  },
+  expenseInfo: {
+    flex: 1,
+  },
+  expenseDesc: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: Colors.text,
+  },
+  expenseMeta: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginTop: 3,
+  },
+  badge: {
+    marginTop: 7,
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  badgeShared: {
+    backgroundColor: Colors.shared,
+    borderColor: Colors.sharedBorder,
+  },
+  badgePersonal: {
+    backgroundColor: Colors.personal,
+    borderColor: Colors.personalBorder,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  badgeSharedText: { color: Colors.sharedText },
+  badgePersonalText: { color: Colors.personalText },
+
+  // Expense right column
+  expenseRight: {
+    alignItems: "flex-end",
+    marginLeft: 10,
+    flexShrink: 0,
+  },
+  expenseAmount: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: Colors.danger,
+  },
+  expenseTotalHint: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  actionRow: {
+    flexDirection: "row",
+    gap: 6,
+    marginTop: 10,
+  },
+  actionBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: Colors.glass,
+    borderWidth: 1,
+    borderColor: Colors.glassBorder,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // Empty state
+  emptyContainer: {
+    alignItems: "center",
+    marginTop: 56,
+    gap: 10,
+  },
+  emptyIconBg: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: Colors.glass,
+    borderWidth: 1,
+    borderColor: Colors.glassBorder,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.textSub,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: Colors.textMuted,
+  },
 });

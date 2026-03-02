@@ -1,41 +1,53 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
 export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+  // Base
+  bg: '#080B14',
+  bgSecondary: '#0F1320',
+
+  // Glass surfaces
+  glass: 'rgba(255, 255, 255, 0.07)',
+  glassMedium: 'rgba(255, 255, 255, 0.11)',
+  glassBorder: 'rgba(255, 255, 255, 0.12)',
+  glassBorderStrong: 'rgba(255, 255, 255, 0.22)',
+  glassHighlight: 'rgba(255, 255, 255, 0.25)',
+
+  // Primary — indigo suave
+  primary: '#7B6CF8',
+  primaryDark: '#5B4FE0',
+  primaryLight: 'rgba(123, 108, 248, 0.15)',
+  primaryGlow: 'rgba(123, 108, 248, 0.25)',
+
+  // Status
+  danger: '#F87171',
+  dangerLight: 'rgba(248, 113, 113, 0.15)',
+  success: '#34D399',
+  successLight: 'rgba(52, 211, 153, 0.15)',
+
+  // Text
+  text: '#FFFFFF',
+  textSub: 'rgba(255, 255, 255, 0.55)',
+  textMuted: 'rgba(255, 255, 255, 0.28)',
+
+  // Badges
+  shared: 'rgba(167, 139, 250, 0.18)',
+  sharedText: '#C4B5FD',
+  sharedBorder: 'rgba(167, 139, 250, 0.30)',
+  personal: 'rgba(96, 165, 250, 0.18)',
+  personalText: '#93C5FD',
+  personalBorder: 'rgba(96, 165, 250, 0.30)',
+
+  // Tab bar
+  tabBg: 'rgba(12, 15, 26, 0.92)',
+  tabActive: '#7B6CF8',
+  tabInactive: 'rgba(255, 255, 255, 0.35)',
 };
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
