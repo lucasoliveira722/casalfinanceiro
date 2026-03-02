@@ -8,6 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -26,23 +29,29 @@ public class ExpenseController {
     @GetMapping
     public ResponseEntity<List<Expense>> listAll(
             @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) Integer month) {
+            @RequestParam(required = false) Integer month,
+            @AuthenticationPrincipal Jwt jwt) { // Pega o crachá
 
-        // Se o frontend enviou o mês e o ano, chama o filtro inteligente
+        String userId = jwt.getSubject();
+        String coupleId = jwt.getClaimAsString("custom:couple_id");
+
         if (year != null && month != null) {
-            return ResponseEntity.ok(service.getExpensesForMonth(year, month));
+            return ResponseEntity.ok(service.getExpensesForMonth(year, month, userId, coupleId));
         }
 
-        // Se não enviou nada, traz tudo (Comportamento antigo)
+        // Se quiser manter o listAll genérico, lembre de criar um método no repository filtrando apenas por coupleId
         return ResponseEntity.ok(service.getAllExpenses());
     }
     @PostMapping
-    public ResponseEntity<Expense> create(@Valid @RequestBody ExpenseRequestDTO dto) {
-        // Simulando um usuário logado por enquanto
-        String dummyUserId = "user-123";
-        Expense savedExpense = service.createExpense(dto, dummyUserId);
+    public ResponseEntity<Expense> create(
+            @RequestBody @Valid ExpenseRequestDTO dto,
+            @AuthenticationPrincipal Jwt jwt) { // Pega o crachá
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedExpense);
+        // Extrai as informações de dentro do Token da AWS
+        String userId = jwt.getSubject();
+        String coupleId = jwt.getClaimAsString("custom:couple_id");
+
+        return ResponseEntity.ok(service.createExpense(dto, userId, coupleId));
     }
 
     @PutMapping("/{id}")

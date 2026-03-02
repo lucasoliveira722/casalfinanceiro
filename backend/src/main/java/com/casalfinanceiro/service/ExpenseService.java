@@ -22,15 +22,18 @@ public class ExpenseService {
         this.repository = repository;
     }
 
-    public Expense createExpense(ExpenseRequestDTO dto, String userId) {
+    public Expense createExpense(ExpenseRequestDTO dto, String userId, String coupleId) {
         Expense expense = new Expense();
         expense.setUserId(userId);
+        expense.setCoupleId(coupleId); // Salvando o código do casal
         expense.setDescription(dto.getDescription());
         expense.setAmount(dto.getAmount());
         expense.setVisibility(dto.getVisibility());
         expense.setExpenseType(dto.getExpenseType());
 
-        applyInstallmentLogic(expense, dto, LocalDate.now());
+        // Mantenha a chamada do applyInstallmentLogic que já fizemos
+        LocalDate baseDate = LocalDate.now();
+        applyInstallmentLogic(expense, dto, baseDate);
 
         return repository.save(expense);
     }
@@ -58,13 +61,13 @@ public class ExpenseService {
         return repository.findAll();
     }
 
-    public List<Expense> getExpensesForMonth(int year, int month) {
+    public List<Expense> getExpensesForMonth(int year, int month, String userId, String coupleId) {
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDateTime startDate = yearMonth.atDay(1).atStartOfDay();
         LocalDateTime endDate = yearMonth.atEndOfMonth().atTime(23, 59, 59);
         LocalDate monthStart = yearMonth.atDay(1);
 
-        return repository.findExpensesForMonth(startDate, endDate, monthStart);
+        return repository.findExpensesForCouple(coupleId, userId, startDate, endDate, monthStart);
     }
 
     // O método precisa estar DENTRO da classe ExpenseService

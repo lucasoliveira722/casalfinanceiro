@@ -1,31 +1,24 @@
-import { LiquidGlassTabBar } from "@/components/liquid-glass-tab-bar";
-import { Tabs } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { StyleSheet, View } from "react-native";
-import { Colors } from "../constants/theme";
+import { Amplify } from "aws-amplify";
+import { Stack } from "expo-router";
+import "react-native-get-random-values"; // DEVE ser a primeira linha do arquivo
 
-export default function Layout() {
-  return (
-    <View style={styles.root}>
-      <StatusBar style="light" />
-      <Tabs
-        tabBar={(props) => <LiquidGlassTabBar {...props} />}
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: Colors.bg },
-        }}
-      >
-        <Tabs.Screen name="index" />
-        <Tabs.Screen name="add" />
-        <Tabs.Screen name="settings" />
-      </Tabs>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: Colors.bg,
+// Configuração da nossa "Portaria" na AWS
+Amplify.configure({
+  Auth: {
+    Cognito: {
+      userPoolId: "us-east-1_AWLbCZmGz",
+      userPoolClientId: "38hpjb8467f286o6l50tv03kr4",
+    },
   },
 });
+
+export default function RootLayout() {
+  return (
+    <Stack>
+      {/* Oculta o cabeçalho padrão nas telas */}
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="add" options={{ headerShown: false }} />
+      <Stack.Screen name="login" options={{ headerShown: false }} />
+    </Stack>
+  );
+}

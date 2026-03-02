@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
+import { fetchAuthSession } from "aws-amplify/auth";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -63,23 +64,23 @@ export default function AddExpenseScreen() {
     };
 
     try {
+      const session = await fetchAuthSession();
+      const token = session.tokens?.idToken?.toString();
+
       const url = isEditing ? `${BACKEND_URL}/${params.id}` : BACKEND_URL;
       const method = isEditing ? "PUT" : "POST";
       const response = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(expenseData),
       });
 
       if (response.ok) {
         Alert.alert("Sucesso", isEditing ? "Gasto atualizado!" : "Gasto registrado!");
-        if (isEditing) {
-          router.back();
-        } else {
-          setDescription("");
-          setAmount("");
-          setInstallments("");
-        }
+        router.back();
       } else {
         Alert.alert("Erro", "Falha ao salvar no servidor.");
       }

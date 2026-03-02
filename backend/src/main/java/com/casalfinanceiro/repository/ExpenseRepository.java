@@ -12,11 +12,14 @@ import java.util.UUID;
 
 public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
 
-    @Query("SELECT e FROM Expense e WHERE " +
-            "(e.expenseType = 'SINGLE' AND e.createdAt >= :startDate AND e.createdAt <= :endDate) OR " +
+    @Query("SELECT e FROM Expense e WHERE e.coupleId = :coupleId AND " +
+            "(e.visibility = 'SHARED' OR (e.visibility = 'PERSONAL' AND e.userId = :userId)) AND " +
+            "((e.expenseType = 'SINGLE' AND e.createdAt >= :startDate AND e.createdAt <= :endDate) OR " +
             "(e.expenseType = 'RECURRING' AND e.createdAt <= :endDate) OR " +
-            "(e.expenseType = 'INSTALLMENT' AND e.createdAt <= :endDate AND e.endMonthYear >= :monthStart)")
-    List<Expense> findExpensesForMonth(
+            "(e.expenseType = 'INSTALLMENT' AND e.createdAt <= :endDate AND e.endMonthYear >= :monthStart))")
+    List<Expense> findExpensesForCouple(
+            @Param("coupleId") String coupleId,
+            @Param("userId") String userId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             @Param("monthStart") LocalDate monthStart

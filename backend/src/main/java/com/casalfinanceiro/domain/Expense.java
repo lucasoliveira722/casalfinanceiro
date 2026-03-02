@@ -16,6 +16,9 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(name = "couple_id", nullable = false)
+    private String coupleId;
+
     @Column(name = "user_id", nullable = false)
     private String userId;
 
