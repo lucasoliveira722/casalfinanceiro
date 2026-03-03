@@ -18,6 +18,7 @@ export default function RootLayout() {
       {/* Oculta o cabeçalho padrão nas telas */}
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="add" options={{ headerShown: false }} />
+      <Stack.Screen name="history" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
     </Stack>
   );

@@ -237,9 +237,17 @@ export default function DashboardScreen() {
           <Text style={{ fontSize: 14, color: "#666" }}>Bem-vindo(a),</Text>
           <Text style={globalStyles.title}>Olá, {userName}!</Text>
         </View>
-        <TouchableOpacity onPress={handleSignOut} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Sair</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          <TouchableOpacity
+            onPress={() => router.push("/history")}
+            style={[styles.logoutButton, { backgroundColor: "#e3f2fd" }]}
+          >
+            <Ionicons name="calendar-outline" size={18} color="#007AFF" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleSignOut} style={styles.logoutButton}>
+            <Text style={styles.logoutText}>Sair</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.tabContainer}>
