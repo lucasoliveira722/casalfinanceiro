@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import {
-  fetchAuthSession,
   fetchUserAttributes,
   getCurrentUser,
   signOut,
@@ -17,8 +16,7 @@ import {
   View,
 } from "react-native";
 import { globalStyles } from "../src/styles/global";
-
-const BACKEND_URL = "http://192.168.0.52:9095/api/expenses";
+import { deleteExpense, getExpenses } from "../src/services/expenseService";
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -59,25 +57,7 @@ export default function DashboardScreen() {
       const currentDate = new Date();
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth() + 1;
-
-      // PEGA O TOKEN DO COGNITO (O "Crachá")
-      const session = await fetchAuthSession();
-      // O idToken contém os atributos personalizados como custom:couple_id
-      const token = session.tokens?.idToken?.toString();
-
-      const response = await fetch(
-        `${BACKEND_URL}?year=${year}&month=${month}`,
-        {
-          headers: {
-            // Envia o token para o Java (O Java utiliza para filtrar os dados)
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      if (!response.ok) throw new Error("Falha ao buscar dados");
-
-      const data = await response.json();
+      const data = await getExpenses(year, month);
       setExpenses(data);
     } catch (error) {
       console.error(error);
@@ -192,17 +172,10 @@ export default function DashboardScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            const session = await fetchAuthSession();
-            const token = session.tokens?.idToken?.toString();
-
-            const response = await fetch(`${BACKEND_URL}/${id}`, {
-              method: "DELETE",
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            if (response.ok) fetchExpenses();
-            else Alert.alert("Erro", "Não foi possível excluir.");
+            await deleteExpense(id);
+            fetchExpenses();
           } catch (error) {
-            Alert.alert("Erro", "Falha na conexão.");
+            Alert.alert("Erro", "Não foi possível excluir.");
           }
         },
       },

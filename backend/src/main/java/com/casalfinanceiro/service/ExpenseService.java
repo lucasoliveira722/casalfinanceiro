@@ -3,6 +3,7 @@ package com.casalfinanceiro.service;
 import com.casalfinanceiro.domain.Expense;
 import com.casalfinanceiro.dto.ExpenseRequestDTO;
 import com.casalfinanceiro.repository.ExpenseRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -38,9 +40,13 @@ public class ExpenseService {
         return repository.save(expense);
     }
 
-    public Expense updateExpense(UUID id, ExpenseRequestDTO dto) {
+    public Expense updateExpense(UUID id, ExpenseRequestDTO dto, String userId, String coupleId) {
         Expense expense = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Gasto não encontrado"));
+                .orElseThrow(() -> new NoSuchElementException("Gasto não encontrado"));
+
+        if (!expense.getCoupleId().equals(coupleId)) {
+            throw new AccessDeniedException("Acesso negado: este gasto pertence a outro casal");
+        }
 
         expense.setDescription(dto.getDescription());
         expense.setAmount(dto.getAmount());
@@ -53,12 +59,15 @@ public class ExpenseService {
         return repository.save(expense);
     }
 
-    public void deleteExpense(UUID id) {
-        repository.deleteById(id);
-    }
+    public void deleteExpense(UUID id, String userId, String coupleId) {
+        Expense expense = repository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Gasto não encontrado"));
 
-    public List<Expense> getAllExpenses() {
-        return repository.findAll();
+        if (!expense.getCoupleId().equals(coupleId)) {
+            throw new AccessDeniedException("Acesso negado: este gasto pertence a outro casal");
+        }
+
+        repository.delete(expense);
     }
 
     public List<Expense> getExpensesForMonth(int year, int month, String userId, String coupleId) {

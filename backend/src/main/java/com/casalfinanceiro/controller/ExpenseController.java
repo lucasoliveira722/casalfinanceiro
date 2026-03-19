@@ -6,7 +6,15 @@ import com.casalfinanceiro.service.ExpenseService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -16,8 +24,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/expenses")
-// TODO: Em produção configuraremos CORS com precisão, isso permite chamadas do React Native local
-@CrossOrigin(origins = "*")
 public class ExpenseController {
 
     private final ExpenseService service;
@@ -35,12 +41,10 @@ public class ExpenseController {
         String userId = jwt.getSubject();
         String coupleId = jwt.getClaimAsString("custom:couple_id");
 
-        if (year != null && month != null) {
-            return ResponseEntity.ok(service.getExpensesForMonth(year, month, userId, coupleId));
-        }
+        int resolvedYear = year != null ? year : java.time.LocalDate.now().getYear();
+        int resolvedMonth = month != null ? month : java.time.LocalDate.now().getMonthValue();
 
-        // Se quiser manter o listAll genérico, lembre de criar um método no repository filtrando apenas por coupleId
-        return ResponseEntity.ok(service.getAllExpenses());
+        return ResponseEntity.ok(service.getExpensesForMonth(resolvedYear, resolvedMonth, userId, coupleId));
     }
     @PostMapping
     public ResponseEntity<Expense> create(
@@ -55,14 +59,21 @@ public class ExpenseController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Expense> update(@PathVariable UUID id, @Valid @RequestBody ExpenseRequestDTO dto) {
-        Expense updatedExpense = service.updateExpense(id, dto);
+    public ResponseEntity<Expense> update(
+            @PathVariable UUID id,
+            @Valid @RequestBody ExpenseRequestDTO dto,
+            @AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+        String coupleId = jwt.getClaimAsString("custom:couple_id");
+        Expense updatedExpense = service.updateExpense(id, dto, userId, coupleId);
         return ResponseEntity.ok(updatedExpense);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        service.deleteExpense(id);
-        return ResponseEntity.noContent().build(); // Retorna 204 (Sem conteúdo) indicando sucesso
+    public ResponseEntity<Void> delete(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+        String coupleId = jwt.getClaimAsString("custom:couple_id");
+        service.deleteExpense(id, userId, coupleId);
+        return ResponseEntity.noContent().build();
     }
 }

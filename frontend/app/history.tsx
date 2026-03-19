@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
+import { getCurrentUser } from "aws-amplify/auth";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -13,8 +13,7 @@ import {
   View,
 } from "react-native";
 import { globalStyles } from "../src/styles/global";
-
-const BACKEND_URL = "http://192.168.0.52:9095/api/expenses";
+import { getExpenses } from "../src/services/expenseService";
 
 const MONTHS = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -44,21 +43,7 @@ export default function HistoryScreen() {
   const fetchExpenses = async () => {
     setIsLoading(true);
     try {
-      const session = await fetchAuthSession();
-      const token = session.tokens?.idToken?.toString();
-
-      const response = await fetch(
-        `${BACKEND_URL}?year=${selectedYear}&month=${selectedMonth}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error("Falha ao buscar dados");
-
-      const data = await response.json();
+      const data = await getExpenses(selectedYear, selectedMonth);
       setExpenses(data);
     } catch (error) {
       console.error(error);

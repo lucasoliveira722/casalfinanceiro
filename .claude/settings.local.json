@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx|json\\)$\")",
+      "Bash(find C:UsersLucasDocumentsProjetoscasalfinanceiro -maxdepth 2 \\\\\\(-name Dockerfile* -o -name docker-compose* -o -name .env* -o -name *.tf -o -name *.yaml -o -name *.yml -o -name *deployment* -o -name *infra* \\\\\\))",
+      "Bash(grep -r \"localhost\\\\|192\\\\.168\\\\|http://\\\\|https://\" 'C:\\\\Users\\\\Lucas\\\\Documents\\\\Projetos\\\\casalfinanceiro/frontend - web' --include=*.tsx --include=*.ts --include=*.json)",
+      "Bash(grep -r \"API_URL\\\\|BACKEND_URL\\\\|BASE_URL\\\\|http\" C:UsersLucasDocumentsProjetoscasalfinanceiro/frontend/app --include=*.tsx --include=*.ts)",
+      "Bash(find C:UsersLucasDocumentsProjetoscasalfinanceiro -type f \\\\\\(-name *.env* -o -name docker* -o -name .github \\\\\\))",
+      "Bash(mvnw.cmd spring-boot:run)",
+      "Bash(npx expo:*)",
+      "Bash(cmd.exe /c \"mvnw.cmd spring-boot:run\")",
+      "Bash(powershell.exe -Command \".\\\\mvnw.cmd spring-boot:run\")",
+      "Bash(where mvn:*)",
+      "Bash(powershell.exe -Command \"Get-Command mvn -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\Program Files\\\\Java' -ErrorAction SilentlyContinue | Format-Table Name; Get-ChildItem 'C:\\\\' -Filter 'mvn*' -Recurse -Depth 3 -ErrorAction SilentlyContinue | Select-Object -First 5 FullName\" 2>&1)",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(taskkill /F /IM java.exe)",
+      "Bash(powershell.exe -Command \"Stop-Process -Name node -Force -ErrorAction SilentlyContinue; Stop-Process -Name java -Force -ErrorAction SilentlyContinue; Write-Host 'Done'\")",
+      "Bash(powershell.exe -Command \"winget --version\" 2>&1)",
+      "Bash(powershell.exe -Command \"winget install EclipseAdoptium.Temurin.21.JDK --accept-package-agreements --accept-source-agreements\" 2>&1)",
+      "Bash(powershell.exe -Command \"java -version\" 2>&1)",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\Program Files\\\\Eclipse Adoptium' -ErrorAction SilentlyContinue | Format-Table Name\")",
+      "Bash(JAVA_HOME=\"/c/Program Files/Eclipse Adoptium/jdk-21.0.10.7-hotspot\")",
+      "Bash(export JAVA_HOME)",
+      "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
+      "Bash(java -version)",
+      "Bash(export JAVA_HOME=\"/c/Program Files/Eclipse Adoptium/jdk-21.0.10.7-hotspot\")",
+      "Bash(./mvnw spring-boot:run)",
+      "Bash(powershell.exe -Command \"docker --version\" 2>&1)",
+      "Bash(docker run:*)",
+      "Bash(./mvnw clean:*)",
+      "Bash(echo $JAVA_HOME)",
+      "Bash(cmd.exe /c \"java -version 2>&1\")",
+      "Bash(cmd.exe /c \"where java 2>&1 && java -version 2>&1\")",
+      "Bash(cmd.exe /c \"echo %JAVA_HOME% && dir \\\\\"C:\\\\Program Files\\\\Java\\\\\" 2>&1 && dir \\\\\"C:\\\\Program Files\\\\Eclipse Adoptium\\\\\" 2>&1 && dir \\\\\"C:\\\\Program Files\\\\Microsoft\\\\\" 2>&1\")",
+      "Bash(cmd.exe /c \"dir \\\\\"C:\\\\\\\\Program Files\\\\\\\\\\\\\" | findstr /i java 2>&1\")",
+      "Bash(powershell.exe -Command \"Get-Command java -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source; [System.Environment]::GetEnvironmentVariable\\('JAVA_HOME', 'Machine'\\); [System.Environment]::GetEnvironmentVariable\\('JAVA_HOME', 'User'\\)\")",
+      "Bash(JAVA_HOME=\"C:/Program Files/Eclipse Adoptium/jdk-21.0.10.7-hotspot\")",
+      "Bash(JAVA_HOME=\"C:/Program Files/Eclipse Adoptium/jdk-21.0.10.7-hotspot\" ./mvnw.cmd clean package -DskipTests)",
+      "Bash(powershell.exe -Command \"Compress-Archive -Path ''casalfinanceiro-0.0.1-SNAPSHOT.jar'' -DestinationPath ''casalfinanceiro-deploy.zip'' -Force\")"
+    ]
+  }
+}

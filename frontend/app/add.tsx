@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
-import { fetchAuthSession } from "aws-amplify/auth";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -15,8 +14,17 @@ import {
   View,
 } from "react-native";
 import { Colors } from "../constants/theme";
+import { createExpense, updateExpense } from "../src/services/expenseService";
 
-const BACKEND_URL = "http://192.168.0.52:9095/api/expenses";
+// On web, inject CSS so the native <select> element inherits the white text colour
+if (Platform.OS === "web" && typeof document !== "undefined") {
+  const style = document.createElement("style");
+  style.textContent = `
+    select { color: ${Colors.text} !important; background-color: transparent !important; }
+    option { color: ${Colors.text} !important; background-color: #1a1a2e !important; }
+  `;
+  document.head.appendChild(style);
+}
 
 export default function AddExpenseScreen() {
   const router = useRouter();
@@ -64,26 +72,14 @@ export default function AddExpenseScreen() {
     };
 
     try {
-      const session = await fetchAuthSession();
-      const token = session.tokens?.idToken?.toString();
-
-      const url = isEditing ? `${BACKEND_URL}/${params.id}` : BACKEND_URL;
-      const method = isEditing ? "PUT" : "POST";
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(expenseData),
-      });
-
-      if (response.ok) {
-        Alert.alert("Sucesso", isEditing ? "Gasto atualizado!" : "Gasto registrado!");
-        router.back();
+      if (isEditing) {
+        await updateExpense(params.id as string, expenseData);
+        Alert.alert("Sucesso", "Gasto atualizado!");
       } else {
-        Alert.alert("Erro", "Falha ao salvar no servidor.");
+        await createExpense(expenseData);
+        Alert.alert("Sucesso", "Gasto registrado!");
       }
+      router.back();
     } catch {
       Alert.alert("Erro de Rede", "Não foi possível conectar à API.");
     }
@@ -133,7 +129,7 @@ export default function AddExpenseScreen() {
                   key={opt.value}
                   label={opt.label}
                   value={opt.value}
-                  color={Platform.OS === "android" ? Colors.text : undefined}
+                  color={Colors.text}
                 />
               ))}
             </Picker>
@@ -175,7 +171,7 @@ export default function AddExpenseScreen() {
                   key={opt.value}
                   label={opt.label}
                   value={opt.value}
-                  color={Platform.OS === "android" ? Colors.text : undefined}
+                  color={Colors.text}
                 />
               ))}
             </Picker>
