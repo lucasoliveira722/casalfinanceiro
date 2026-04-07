@@ -37,7 +37,12 @@
       "Bash(powershell.exe -Command \"Get-Command java -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source; [System.Environment]::GetEnvironmentVariable\\('JAVA_HOME', 'Machine'\\); [System.Environment]::GetEnvironmentVariable\\('JAVA_HOME', 'User'\\)\")",
       "Bash(JAVA_HOME=\"C:/Program Files/Eclipse Adoptium/jdk-21.0.10.7-hotspot\")",
       "Bash(JAVA_HOME=\"C:/Program Files/Eclipse Adoptium/jdk-21.0.10.7-hotspot\" ./mvnw.cmd clean package -DskipTests)",
-      "Bash(powershell.exe -Command \"Compress-Archive -Path ''casalfinanceiro-0.0.1-SNAPSHOT.jar'' -DestinationPath ''casalfinanceiro-deploy.zip'' -Force\")"
+      "Bash(powershell.exe -Command \"Compress-Archive -Path ''casalfinanceiro-0.0.1-SNAPSHOT.jar'' -DestinationPath ''casalfinanceiro-deploy.zip'' -Force\")",
+      "Bash(ls -la \"F:/Projetos/casalfinanceiro/frontend/.env\"*)",
+      "Bash(curl:*)",
+      "Bash(ssh:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)"
     ]
   }
 }
