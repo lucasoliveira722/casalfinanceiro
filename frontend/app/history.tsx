@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { globalStyles } from "../src/styles/global";
 import { getExpenses } from "../src/services/expenseService";
 
@@ -112,7 +113,7 @@ export default function HistoryScreen() {
   }, 0);
 
   return (
-    <View style={globalStyles.container}>
+    <SafeAreaView style={globalStyles.container} edges={["bottom"]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#007AFF" />
@@ -171,6 +172,7 @@ export default function HistoryScreen() {
           data={expenses}
           keyExtractor={(item) => item.id}
           renderItem={renderExpenseItem}
+          style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 20 }}
           ListEmptyComponent={
@@ -178,7 +180,7 @@ export default function HistoryScreen() {
           }
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 

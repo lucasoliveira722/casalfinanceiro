@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { globalStyles } from "../src/styles/global";
 import { deleteExpense, getExpenses } from "../src/services/expenseService";
 
@@ -203,7 +204,7 @@ export default function DashboardScreen() {
   };
 
   return (
-    <View style={globalStyles.container}>
+    <SafeAreaView style={[globalStyles.container, { paddingBottom: 0 }]} edges={["bottom"]}>
       {/* CABEÇALHO COM NOME E BOTÃO SAIR */}
       <View style={styles.header}>
         <View>
@@ -286,8 +287,9 @@ export default function DashboardScreen() {
           data={filteredExpenses}
           keyExtractor={(item) => item.id}
           renderItem={renderExpenseItem}
+          style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ paddingBottom: 90 }}
           ListEmptyComponent={
             <Text style={styles.emptyText}>
               Nenhum gasto registrado no mês atual.
@@ -303,7 +305,7 @@ export default function DashboardScreen() {
       >
         <Ionicons name="add" size={28} color="white" />
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 

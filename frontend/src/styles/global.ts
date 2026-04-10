@@ -3,7 +3,7 @@ import { Colors } from "../../constants/theme";
 
 export const globalStyles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    flex: 1,
     backgroundColor: Colors.bg,
     paddingHorizontal: 20,
     paddingTop: 20,
